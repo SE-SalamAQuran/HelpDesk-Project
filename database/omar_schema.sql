@@ -30,7 +30,7 @@ CREATE TABLE TICKET (
     Created_By INT NOT NULL,
     Assigned_To INT NULL,
     Category ENUM('IT','HR') NOT NULL DEFAULT 'HR',
-    Status ENUM('Open','In Progress','Resolved','Closed') NOT NULL DEFAULT 'Open',
+    Status ENUM('Open','In Progress','Resolved','Closed','Reopened') NOT NULL DEFAULT 'Open',
     Priority ENUM('Low','Medium','High','Critical') NOT NULL DEFAULT 'Medium',
     FOREIGN KEY (Created_By)
         REFERENCES `USER`(ID),
@@ -69,13 +69,13 @@ CREATE TABLE ATTACHMENT (
     File_Name VARCHAR(255) NOT NULL,
     File_Path VARCHAR(500) NOT NULL,
     Ticket_ID INT NOT NULL,
-    Updated_By INT NOT NULL,
+    Uploaded_By INT NOT NULL,
     Created_At DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (Ticket_ID)
         REFERENCES TICKET(ID)
         ON DELETE CASCADE,
 
-    FOREIGN KEY (Updated_By)
+    FOREIGN KEY (Uploaded_By)
         REFERENCES `USER`(ID)
 );
 
