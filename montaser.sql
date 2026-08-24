@@ -3,21 +3,8 @@ CREATE TABLE users (
     Full_Name VARCHAR(100) NOT NULL,
     Email VARCHAR(150) NOT NULL UNIQUE,
     Password_Hash VARCHAR(255) NOT NULL,
-    Role VARCHAR(50) NOT NULL,
+    Role ENUM('admin', 'IT_employee') NOT NULL,
     Created_At DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TABLE Category (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    Name VARCHAR(100) NOT NULL,
-    Description VARCHAR(255)
-);
-CREATE TABLE Status (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    Name VARCHAR(50) NOT NULL
-);
-CREATE TABLE Priority (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    Name VARCHAR(50) NOT NULL
 );
 CREATE TABLE Ticket (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -27,19 +14,17 @@ CREATE TABLE Ticket (
     Updated_At DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     Created_By INT NOT NULL,
     Assigned_To INT NULL,
-    Category_ID INT NOT NULL,
-    Status_ID INT NOT NULL,
-    Priority_ID INT NOT NULL,
+    Category ENUM('hardware', 'software', 'network', 'other') NOT NULL,
+    Status ENUM('open', 'in_progress', 'resolved', 'closed') NOT NULL,
+    Priority ENUM('low', 'medium', 'high') NOT NULL,
     FOREIGN KEY (Created_By) REFERENCES users(id),
-    FOREIGN KEY (Assigned_To) REFERENCES users(id),
-    FOREIGN KEY (Category_ID) REFERENCES Category(id),
-    FOREIGN KEY (Status_ID) REFERENCES Status(id),
-    FOREIGN KEY (Priority_ID) REFERENCES Priority(id)
+    FOREIGN KEY (Assigned_To) REFERENCES users(id)
 );
 CREATE TABLE Comment (
     id INT AUTO_INCREMENT PRIMARY KEY,
     Comment_Text TEXT NOT NULL,
     Created_At DATETIME DEFAULT CURRENT_TIMESTAMP,
+    Updated_At DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     Ticket_ID INT NOT NULL,
     User_ID INT NOT NULL,
     FOREIGN KEY (Ticket_ID) REFERENCES Ticket(id) ON DELETE CASCADE,
@@ -62,7 +47,7 @@ CREATE TABLE Ticket_History (
     New_Value TEXT,
     Ticket_ID INT NOT NULL,
     Changed_By INT NOT NULL,
-    Changed_At DATETIME DEFAULT CURRENT_TIMESTAMP,
+    Created_At DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (Ticket_ID) REFERENCES Ticket(id) ON DELETE CASCADE,
     FOREIGN KEY (Changed_By) REFERENCES users(id)
 );
