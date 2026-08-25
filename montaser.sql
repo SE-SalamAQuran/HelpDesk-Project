@@ -3,8 +3,9 @@ CREATE TABLE users (
     Full_Name VARCHAR(100) NOT NULL,
     Email VARCHAR(150) NOT NULL UNIQUE,
     Password_Hash VARCHAR(255) NOT NULL,
-    Role ENUM('admin', 'IT_employee') NOT NULL,
-    Created_At DATETIME DEFAULT CURRENT_TIMESTAMP
+    Role ENUM('admin', 'IT_employee','employee') NOT NULL,
+    Created_At DATETIME DEFAULT CURRENT_TIMESTAMP,
+    Modified_At DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 CREATE TABLE Ticket (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -15,8 +16,8 @@ CREATE TABLE Ticket (
     Created_By INT NOT NULL,
     Assigned_To INT NULL,
     Category ENUM('hardware', 'software', 'network', 'other') NOT NULL,
-    Status ENUM('open', 'in_progress', 'resolved', 'closed') NOT NULL,
-    Priority ENUM('low', 'medium', 'high') NOT NULL,
+    Status ENUM('open', 'in_progress', 'resolved', 'closed', 'reopened') NOT NULL,
+    Priority ENUM('low', 'medium', 'high', 'critical') NOT NULL DEFAULT 'medium',
     FOREIGN KEY (Created_By) REFERENCES users(id),
     FOREIGN KEY (Assigned_To) REFERENCES users(id)
 );
