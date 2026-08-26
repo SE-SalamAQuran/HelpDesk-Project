@@ -1,8 +1,12 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from app.config import get_db_connection
 
 tickets_bp = Blueprint("tickets", __name__)
 
+
+# =====================================================
+# GET ALL TICKETS
+# =====================================================
 
 @tickets_bp.route("/tickets", methods=["GET"])
 def get_tickets():
@@ -30,6 +34,60 @@ def get_tickets():
         if connection and connection.is_connected():
             connection.close()
 
+
+# =====================================================
+# FILTER TICKETS
+# =====================================================
+
+@tickets_bp.route("/tickets/filter", methods=["GET"])
+def filter_tickets():
+    connection = None
+    cursor = None
+
+    try:
+        status = request.args.get("status")
+        priority = request.args.get("priority")
+        category = request.args.get("category")
+
+        query = "SELECT * FROM TICKET WHERE 1=1"
+        values = []
+
+        if status:
+            query += " AND Status = %s"
+            values.append(status)
+
+        if priority:
+            query += " AND Priority = %s"
+            values.append(priority)
+
+        if category:
+            query += " AND Category = %s"
+            values.append(category)
+
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute(query, values)
+        tickets = cursor.fetchall()
+
+        return jsonify(tickets), 200
+
+    except Exception as error:
+        return jsonify({
+            "error": str(error)
+        }), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+
+        if connection and connection.is_connected():
+            connection.close()
+
+
+# =====================================================
+# GET TICKET BY ID
+# =====================================================
 
 @tickets_bp.route("/tickets/<int:ticket_id>", methods=["GET"])
 def get_ticket_by_id(ticket_id):
