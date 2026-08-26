@@ -36,56 +36,6 @@ def get_tickets():
 
 
 # =====================================================
-# FILTER TICKETS
-# =====================================================
-
-@tickets_bp.route("/tickets/filter", methods=["GET"])
-def filter_tickets():
-    connection = None
-    cursor = None
-
-    try:
-        status = request.args.get("status")
-        priority = request.args.get("priority")
-        category = request.args.get("category")
-
-        query = "SELECT * FROM TICKET WHERE 1=1"
-        values = []
-
-        if status:
-            query += " AND Status = %s"
-            values.append(status)
-
-        if priority:
-            query += " AND Priority = %s"
-            values.append(priority)
-
-        if category:
-            query += " AND Category = %s"
-            values.append(category)
-
-        connection = get_db_connection()
-        cursor = connection.cursor(dictionary=True)
-
-        cursor.execute(query, values)
-        tickets = cursor.fetchall()
-
-        return jsonify(tickets), 200
-
-    except Exception as error:
-        return jsonify({
-            "error": str(error)
-        }), 500
-
-    finally:
-        if cursor:
-            cursor.close()
-
-        if connection and connection.is_connected():
-            connection.close()
-
-
-# =====================================================
 # SEARCH TICKETS
 # =====================================================
 
@@ -118,6 +68,67 @@ def search_tickets():
             (search_value, search_value)
         )
 
+        tickets = cursor.fetchall()
+
+        return jsonify(tickets), 200
+
+    except Exception as error:
+        return jsonify({
+            "error": str(error)
+        }), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+
+        if connection and connection.is_connected():
+            connection.close()
+
+
+# =====================================================
+# FILTER TICKETS
+# creation_date, priority, created_by, status, category
+# =====================================================
+
+@tickets_bp.route("/tickets/filter", methods=["GET"])
+def filter_tickets():
+    connection = None
+    cursor = None
+
+    try:
+        creation_date = request.args.get("creation_date")
+        priority = request.args.get("priority")
+        created_by = request.args.get("created_by")
+        status = request.args.get("status")
+        category = request.args.get("category")
+
+        query = "SELECT * FROM TICKET WHERE 1=1"
+        values = []
+
+        if creation_date:
+            query += " AND DATE(Created_At) = %s"
+            values.append(creation_date)
+
+        if priority:
+            query += " AND Priority = %s"
+            values.append(priority)
+
+        if created_by:
+            query += " AND Created_By = %s"
+            values.append(created_by)
+
+        if status:
+            query += " AND Status = %s"
+            values.append(status)
+
+        if category:
+            query += " AND Category = %s"
+            values.append(category)
+
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute(query, values)
         tickets = cursor.fetchall()
 
         return jsonify(tickets), 200
@@ -294,31 +305,23 @@ def update_ticket(ticket_id):
                 "message": "Ticket not found"
             }), 404
 
-        title = data.get(
-            "title",
-            ticket["Title"]
-        )
-
+        title = data.get("title", ticket["Title"])
         description = data.get(
             "description",
             ticket["Description"]
         )
-
         assigned_to = data.get(
             "assigned_to",
             ticket["Assigned_To"]
         )
-
         category = data.get(
             "category",
             ticket["Category"]
         )
-
         status = data.get(
             "status",
             ticket["Status"]
         )
-
         priority = data.get(
             "priority",
             ticket["Priority"]
