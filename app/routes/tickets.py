@@ -294,23 +294,31 @@ def update_ticket(ticket_id):
                 "message": "Ticket not found"
             }), 404
 
-        title = data.get("title", ticket["Title"])
+        title = data.get(
+            "title",
+            ticket["Title"]
+        )
+
         description = data.get(
             "description",
             ticket["Description"]
         )
+
         assigned_to = data.get(
             "assigned_to",
             ticket["Assigned_To"]
         )
+
         category = data.get(
             "category",
             ticket["Category"]
         )
+
         status = data.get(
             "status",
             ticket["Status"]
         )
+
         priority = data.get(
             "priority",
             ticket["Priority"]
@@ -348,6 +356,58 @@ def update_ticket(ticket_id):
         updated_ticket = cursor.fetchone()
 
         return jsonify(updated_ticket), 200
+
+    except Exception as error:
+        if connection:
+            connection.rollback()
+
+        return jsonify({
+            "error": str(error)
+        }), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+
+        if connection and connection.is_connected():
+            connection.close()
+
+
+# =====================================================
+# DELETE TICKET
+# =====================================================
+
+@tickets_bp.route("/tickets/<int:ticket_id>", methods=["DELETE"])
+def delete_ticket(ticket_id):
+    connection = None
+    cursor = None
+
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute(
+            "SELECT * FROM TICKET WHERE ID = %s",
+            (ticket_id,)
+        )
+
+        ticket = cursor.fetchone()
+
+        if ticket is None:
+            return jsonify({
+                "message": "Ticket not found"
+            }), 404
+
+        cursor.execute(
+            "DELETE FROM TICKET WHERE ID = %s",
+            (ticket_id,)
+        )
+
+        connection.commit()
+
+        return jsonify({
+            "message": "Ticket deleted successfully"
+        }), 200
 
     except Exception as error:
         if connection:
