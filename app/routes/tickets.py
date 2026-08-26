@@ -101,13 +101,13 @@ def search_tickets():
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
+        search_value = f"%{search}%"
+
         query = """
             SELECT * FROM TICKET
             WHERE Title LIKE %s
             OR Description LIKE %s
         """
-
-        search_value = f"%{search}%"
 
         cursor.execute(
             query,
@@ -120,6 +120,86 @@ def search_tickets():
 
     except Exception as error:
         return jsonify({"error": str(error)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+
+        if connection and connection.is_connected():
+            connection.close()
+
+
+# =====================================================
+# CREATE TICKET
+# =====================================================
+
+@tickets_bp.route("/tickets", methods=["POST"])
+def create_ticket():
+    connection = None
+    cursor = None
+
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({
+                "message": "JSON data is required"
+            }), 400
+
+        title = data.get("title")
+        description = data.get("description")
+        created_by = data.get("created_by")
+        assigned_to = data.get("assigned_to")
+        category = data.get("category", "HR")
+        status = data.get("status", "Open")
+        priority = data.get("priority")
+
+        if not title or not created_by or not priority:
+            return jsonify({
+                "message": "title, created_by and priority are required"
+            }), 400
+
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        query = """
+            INSERT INTO TICKET
+            (Title, Description, Created_By, Assigned_To,
+             Category, Status, Priority)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """
+
+        values = (
+            title,
+            description,
+            created_by,
+            assigned_to,
+            category,
+            status,
+            priority
+        )
+
+        cursor.execute(query, values)
+        connection.commit()
+
+        ticket_id = cursor.lastrowid
+
+        cursor.execute(
+            "SELECT * FROM TICKET WHERE ID = %s",
+            (ticket_id,)
+        )
+
+        new_ticket = cursor.fetchone()
+
+        return jsonify(new_ticket), 201
+
+    except Exception as error:
+        if connection:
+            connection.rollback()
+
+        return jsonify({
+            "error": str(error)
+        }), 500
 
     finally:
         if cursor:
