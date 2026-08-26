@@ -5,7 +5,7 @@ tickets_bp = Blueprint("tickets", __name__)
 
 
 # =====================================================
-# GET ALL TICKETS
+# GET ALL TICKETS + PAGINATION
 # =====================================================
 
 @tickets_bp.route("/tickets", methods=["GET"])
@@ -14,13 +14,48 @@ def get_tickets():
     cursor = None
 
     try:
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 5, type=int)
+
+        if page < 1:
+            page = 1
+
+        if per_page < 1:
+            per_page = 5
+
+        offset = (page - 1) * per_page
+
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
-        cursor.execute("SELECT * FROM TICKET")
+        # Count all tickets
+        cursor.execute("SELECT COUNT(*) AS total FROM TICKET")
+        total = cursor.fetchone()["total"]
+
+        # Get tickets for current page
+        query = """
+            SELECT *
+            FROM TICKET
+            ORDER BY ID
+            LIMIT %s OFFSET %s
+        """
+
+        cursor.execute(
+            query,
+            (per_page, offset)
+        )
+
         tickets = cursor.fetchall()
 
-        return jsonify(tickets), 200
+        total_pages = (total + per_page - 1) // per_page
+
+        return jsonify({
+            "page": page,
+            "per_page": per_page,
+            "total_tickets": total,
+            "total_pages": total_pages,
+            "tickets": tickets
+        }), 200
 
     except Exception as error:
         return jsonify({
@@ -58,9 +93,11 @@ def search_tickets():
         search_value = f"%{search}%"
 
         query = """
-            SELECT * FROM TICKET
+            SELECT *
+            FROM TICKET
             WHERE Title LIKE %s
             OR Description LIKE %s
+            ORDER BY ID
         """
 
         cursor.execute(
@@ -87,7 +124,11 @@ def search_tickets():
 
 # =====================================================
 # FILTER TICKETS
-# creation_date, priority, created_by, status, category
+# creation_date
+# priority
+# created_by
+# status
+# category
 # =====================================================
 
 @tickets_bp.route("/tickets/filter", methods=["GET"])
@@ -124,6 +165,8 @@ def filter_tickets():
         if category:
             query += " AND Category = %s"
             values.append(category)
+
+        query += " ORDER BY ID"
 
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
@@ -167,13 +210,23 @@ def create_ticket():
         description = data.get("description")
         created_by = data.get("created_by")
         assigned_to = data.get("assigned_to")
-        category = data.get("category", "HR")
-        status = data.get("status", "Open")
+
+        category = data.get(
+            "category",
+            "HR"
+        )
+
+        status = data.get(
+            "status",
+            "Open"
+        )
+
         priority = data.get("priority")
 
         if not title or not created_by or not priority:
             return jsonify({
-                "message": "title, created_by and priority are required"
+                "message":
+                "title, created_by and priority are required"
             }), 400
 
         connection = get_db_connection()
@@ -204,6 +257,7 @@ def create_ticket():
         )
 
         cursor.execute(query, values)
+
         connection.commit()
 
         ticket_id = cursor.lastrowid
@@ -237,7 +291,10 @@ def create_ticket():
 # GET TICKET BY ID
 # =====================================================
 
-@tickets_bp.route("/tickets/<int:ticket_id>", methods=["GET"])
+@tickets_bp.route(
+    "/tickets/<int:ticket_id>",
+    methods=["GET"]
+)
 def get_ticket_by_id(ticket_id):
     connection = None
     cursor = None
@@ -277,7 +334,10 @@ def get_ticket_by_id(ticket_id):
 # UPDATE TICKET
 # =====================================================
 
-@tickets_bp.route("/tickets/<int:ticket_id>", methods=["PUT"])
+@tickets_bp.route(
+    "/tickets/<int:ticket_id>",
+    methods=["PUT"]
+)
 def update_ticket(ticket_id):
     connection = None
     cursor = None
@@ -293,6 +353,7 @@ def update_ticket(ticket_id):
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
+        # Check if ticket exists
         cursor.execute(
             "SELECT * FROM TICKET WHERE ID = %s",
             (ticket_id,)
@@ -305,23 +366,31 @@ def update_ticket(ticket_id):
                 "message": "Ticket not found"
             }), 404
 
-        title = data.get("title", ticket["Title"])
+        title = data.get(
+            "title",
+            ticket["Title"]
+        )
+
         description = data.get(
             "description",
             ticket["Description"]
         )
+
         assigned_to = data.get(
             "assigned_to",
             ticket["Assigned_To"]
         )
+
         category = data.get(
             "category",
             ticket["Category"]
         )
+
         status = data.get(
             "status",
             ticket["Status"]
         )
+
         priority = data.get(
             "priority",
             ticket["Priority"]
@@ -349,6 +418,7 @@ def update_ticket(ticket_id):
         )
 
         cursor.execute(query, values)
+
         connection.commit()
 
         cursor.execute(
@@ -380,7 +450,10 @@ def update_ticket(ticket_id):
 # DELETE TICKET
 # =====================================================
 
-@tickets_bp.route("/tickets/<int:ticket_id>", methods=["DELETE"])
+@tickets_bp.route(
+    "/tickets/<int:ticket_id>",
+    methods=["DELETE"]
+)
 def delete_ticket(ticket_id):
     connection = None
     cursor = None
@@ -389,6 +462,7 @@ def delete_ticket(ticket_id):
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
+        # Check if ticket exists
         cursor.execute(
             "SELECT * FROM TICKET WHERE ID = %s",
             (ticket_id,)
