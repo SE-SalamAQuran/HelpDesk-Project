@@ -23,9 +23,7 @@ def get_tickets():
         return jsonify(tickets), 200
 
     except Exception as error:
-        return jsonify({
-            "error": str(error)
-        }), 500
+        return jsonify({"error": str(error)}), 500
 
     finally:
         if cursor:
@@ -73,9 +71,55 @@ def filter_tickets():
         return jsonify(tickets), 200
 
     except Exception as error:
-        return jsonify({
-            "error": str(error)
-        }), 500
+        return jsonify({"error": str(error)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+
+        if connection and connection.is_connected():
+            connection.close()
+
+
+# =====================================================
+# SEARCH TICKETS
+# =====================================================
+
+@tickets_bp.route("/tickets/search", methods=["GET"])
+def search_tickets():
+    connection = None
+    cursor = None
+
+    try:
+        search = request.args.get("q")
+
+        if not search:
+            return jsonify({
+                "message": "Please enter a search value"
+            }), 400
+
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        query = """
+            SELECT * FROM TICKET
+            WHERE Title LIKE %s
+            OR Description LIKE %s
+        """
+
+        search_value = f"%{search}%"
+
+        cursor.execute(
+            query,
+            (search_value, search_value)
+        )
+
+        tickets = cursor.fetchall()
+
+        return jsonify(tickets), 200
+
+    except Exception as error:
+        return jsonify({"error": str(error)}), 500
 
     finally:
         if cursor:
@@ -113,9 +157,7 @@ def get_ticket_by_id(ticket_id):
         return jsonify(ticket), 200
 
     except Exception as error:
-        return jsonify({
-            "error": str(error)
-        }), 500
+        return jsonify({"error": str(error)}), 500
 
     finally:
         if cursor:
