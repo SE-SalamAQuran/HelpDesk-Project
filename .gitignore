@@ -219,3 +219,6 @@ __marimo__/
 
 # Firebase private key
 Resources/serviceAccountKey.json
+
+# Uploaded attachment files
+uploads/
