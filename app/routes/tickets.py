@@ -6,6 +6,8 @@ tickets_bp = Blueprint("tickets", __name__)
 
 # =====================================================
 # GET ALL TICKETS + FILTERS + PAGINATION
+# Filters:
+# category, status, created_by, created_at, priority
 # =====================================================
 
 @tickets_bp.route("/tickets", methods=["GET"])
@@ -58,6 +60,7 @@ def get_tickets():
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
+        # Count tickets after applying filters
         count_query = "SELECT COUNT(*) AS total" + query
 
         cursor.execute(count_query, values)
@@ -188,8 +191,11 @@ def create_ticket():
 
 # =====================================================
 # SEARCH TICKETS
-# Search by: title, description, created_by
-# Supports multiple field search
+# One keyword searches:
+# Title
+# Description
+# Created By ID
+# Created By Name
 # =====================================================
 
 @tickets_bp.route("/tickets/search", methods=["GET"])
@@ -198,39 +204,49 @@ def search_tickets():
     cursor = None
 
     try:
-        title = request.args.get("title")
-        description = request.args.get("description")
-        created_by = request.args.get("created_by")
+        search = request.args.get("q")
 
-        if not title and not description and not created_by:
+        if not search:
             return jsonify({
-                "message": "Enter title, description, or created_by"
+                "message": "Please enter a search keyword"
             }), 400
-
-        query = "SELECT * FROM TICKET WHERE 1=1"
-        values = []
-
-        if title:
-            query += " AND Title LIKE %s"
-            values.append(f"%{title}%")
-
-        if description:
-            query += " AND Description LIKE %s"
-            values.append(f"%{description}%")
-
-        if created_by:
-            query += " AND Created_By = %s"
-            values.append(created_by)
-
-        query += " ORDER BY ID ASC"
 
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
-        cursor.execute(query, values)
+        search_value = f"%{search}%"
+
+        query = """
+            SELECT
+                t.*,
+                u.Full_Name AS Created_By_Name
+            FROM TICKET t
+            LEFT JOIN `USER` u
+                ON t.Created_By = u.ID
+            WHERE t.Title LIKE %s
+               OR t.Description LIKE %s
+               OR u.Full_Name LIKE %s
+               OR CAST(t.Created_By AS CHAR) LIKE %s
+            ORDER BY t.ID ASC
+        """
+
+        cursor.execute(
+            query,
+            (
+                search_value,
+                search_value,
+                search_value,
+                search_value
+            )
+        )
+
         tickets = cursor.fetchall()
 
-        return jsonify(tickets), 200
+        return jsonify({
+            "search": search,
+            "count": len(tickets),
+            "tickets": tickets
+        }), 200
 
     except Exception as error:
         return jsonify({
@@ -317,7 +333,10 @@ def update_ticket(ticket_id):
                 "message": "Ticket not found"
             }), 404
 
-        title = data.get("title", ticket["Title"])
+        title = data.get(
+            "title",
+            ticket["Title"]
+        )
 
         description = data.get(
             "description",
