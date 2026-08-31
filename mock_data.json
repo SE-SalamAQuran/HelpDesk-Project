@@ -1,0 +1,320 @@
+{
+  "users": [
+    {
+      "ID": 1,
+      "Full_Name": "Ahmad Khalil",
+      "Email": "ahmad@company.com",
+      "Password": "hashed_password_1",
+      "Role": "admin"
+    },
+    {
+      "ID": 2,
+      "Full_Name": "Omar Nasser",
+      "Email": "omar.it@company.com",
+      "Password": "hashed_password_2",
+      "Role": "IT"
+    },
+    {
+      "ID": 3,
+      "Full_Name": "Sara Ali",
+      "Email": "sara.it@company.com",
+      "Password": "hashed_password_3",
+      "Role": "IT"
+    },
+    {
+      "ID": 4,
+      "Full_Name": "Mohammad Hasan",
+      "Email": "mohammad@company.com",
+      "Password": "hashed_password_4",
+      "Role": "employee"
+    },
+    {
+      "ID": 5,
+      "Full_Name": "Lina Ahmad",
+      "Email": "lina@company.com",
+      "Password": "hashed_password_5",
+      "Role": "employee"
+    },
+    {
+      "ID": 6,
+      "Full_Name": "Yousef Sami",
+      "Email": "yousef@company.com",
+      "Password": "hashed_password_6",
+      "Role": "employee"
+    }
+  ],
+
+  "tickets": [
+    {
+      "ID": 1,
+      "Title": "Laptop Not Connecting to WiFi",
+      "Description": "Employee cannot connect the company laptop to WiFi.",
+      "Created_By": 4,
+      "Assigned_To": 2,
+      "Category": "IT",
+      "Status": "In Progress",
+      "Priority": "High"
+    },
+    {
+      "ID": 2,
+      "Title": "Forgot Email Password",
+      "Description": "Employee forgot the password for the company email.",
+      "Created_By": 5,
+      "Assigned_To": 3,
+      "Category": "IT",
+      "Status": "Resolved",
+      "Priority": "Medium"
+    },
+    {
+      "ID": 3,
+      "Title": "Request New Mouse",
+      "Description": "Employee needs a new wireless mouse.",
+      "Created_By": 6,
+      "Assigned_To": 2,
+      "Category": "IT",
+      "Status": "Open",
+      "Priority": "Low"
+    },
+    {
+      "ID": 4,
+      "Title": "Printer Not Working",
+      "Description": "Office printer is not printing documents.",
+      "Created_By": 4,
+      "Assigned_To": 3,
+      "Category": "IT",
+      "Status": "In Progress",
+      "Priority": "High"
+    },
+    {
+      "ID": 5,
+      "Title": "Vacation Request Problem",
+      "Description": "Employee cannot submit vacation request.",
+      "Created_By": 5,
+      "Assigned_To": null,
+      "Category": "HR",
+      "Status": "Open",
+      "Priority": "Medium"
+    },
+    {
+      "ID": 6,
+      "Title": "Computer Running Slowly",
+      "Description": "The desktop computer is very slow.",
+      "Created_By": 6,
+      "Assigned_To": 2,
+      "Category": "IT",
+      "Status": "Resolved",
+      "Priority": "Critical"
+    },
+    {
+      "ID": 7,
+      "Title": "Salary Information Request",
+      "Description": "Employee needs clarification about salary information.",
+      "Created_By": 4,
+      "Assigned_To": null,
+      "Category": "HR",
+      "Status": "Closed",
+      "Priority": "Medium"
+    },
+    {
+      "ID": 8,
+      "Title": "Microsoft Office Error",
+      "Description": "Microsoft Office shows an activation error.",
+      "Created_By": 5,
+      "Assigned_To": 3,
+      "Category": "IT",
+      "Status": "Reopened",
+      "Priority": "High"
+    }
+  ],
+
+  "comments": [
+    {
+      "ID": 1,
+      "Comment_Text": "The problem started this morning.",
+      "User_ID": 4,
+      "Ticket_ID": 1
+    },
+    {
+      "ID": 2,
+      "Comment_Text": "I will check the network settings.",
+      "User_ID": 2,
+      "Ticket_ID": 1
+    },
+    {
+      "ID": 3,
+      "Comment_Text": "Password has been reset successfully.",
+      "User_ID": 3,
+      "Ticket_ID": 2
+    },
+    {
+      "ID": 4,
+      "Comment_Text": "Thank you, the email is working now.",
+      "User_ID": 5,
+      "Ticket_ID": 2
+    },
+    {
+      "ID": 5,
+      "Comment_Text": "Please provide the mouse model you prefer.",
+      "User_ID": 2,
+      "Ticket_ID": 3
+    },
+    {
+      "ID": 6,
+      "Comment_Text": "The printer driver needs to be reinstalled.",
+      "User_ID": 3,
+      "Ticket_ID": 4
+    },
+    {
+      "ID": 7,
+      "Comment_Text": "Please check the vacation balance first.",
+      "User_ID": 1,
+      "Ticket_ID": 5
+    },
+    {
+      "ID": 8,
+      "Comment_Text": "I cleaned temporary files and updated Windows.",
+      "User_ID": 2,
+      "Ticket_ID": 6
+    },
+    {
+      "ID": 9,
+      "Comment_Text": "The computer is working normally now.",
+      "User_ID": 6,
+      "Ticket_ID": 6
+    },
+    {
+      "ID": 10,
+      "Comment_Text": "The Office activation issue appeared again.",
+      "User_ID": 5,
+      "Ticket_ID": 8
+    }
+  ],
+
+  "attachments": [
+    {
+      "ID": 1,
+      "File_Name": "wifi_error.png",
+      "File_Path": "/uploads/tickets/1/wifi_error.png",
+      "Ticket_ID": 1,
+      "Uploaded_By": 4
+    },
+    {
+      "ID": 2,
+      "File_Name": "printer_error.jpg",
+      "File_Path": "/uploads/tickets/4/printer_error.jpg",
+      "Ticket_ID": 4,
+      "Uploaded_By": 4
+    },
+    {
+      "ID": 3,
+      "File_Name": "vacation_request.pdf",
+      "File_Path": "/uploads/tickets/5/vacation_request.pdf",
+      "Ticket_ID": 5,
+      "Uploaded_By": 5
+    },
+    {
+      "ID": 4,
+      "File_Name": "slow_pc.png",
+      "File_Path": "/uploads/tickets/6/slow_pc.png",
+      "Ticket_ID": 6,
+      "Uploaded_By": 6
+    },
+    {
+      "ID": 5,
+      "File_Name": "office_error.png",
+      "File_Path": "/uploads/tickets/8/office_error.png",
+      "Ticket_ID": 8,
+      "Uploaded_By": 5
+    },
+    {
+      "ID": 6,
+      "File_Name": "office_license.pdf",
+      "File_Path": "/uploads/tickets/8/office_license.pdf",
+      "Ticket_ID": 8,
+      "Uploaded_By": 3
+    }
+  ],
+
+  "change_logs": [
+    {
+      "ID": 1,
+      "Field_Name": "Status",
+      "Old_Value": "Open",
+      "New_Value": "In Progress",
+      "Ticket_ID": 1,
+      "Changed_By": 2
+    },
+    {
+      "ID": 2,
+      "Field_Name": "Assigned_To",
+      "Old_Value": null,
+      "New_Value": "2",
+      "Ticket_ID": 1,
+      "Changed_By": 1
+    },
+    {
+      "ID": 3,
+      "Field_Name": "Status",
+      "Old_Value": "Open",
+      "New_Value": "Resolved",
+      "Ticket_ID": 2,
+      "Changed_By": 3
+    },
+    {
+      "ID": 4,
+      "Field_Name": "Assigned_To",
+      "Old_Value": null,
+      "New_Value": "3",
+      "Ticket_ID": 2,
+      "Changed_By": 1
+    },
+    {
+      "ID": 5,
+      "Field_Name": "Priority",
+      "Old_Value": "Medium",
+      "New_Value": "High",
+      "Ticket_ID": 4,
+      "Changed_By": 3
+    },
+    {
+      "ID": 6,
+      "Field_Name": "Status",
+      "Old_Value": "Open",
+      "New_Value": "In Progress",
+      "Ticket_ID": 4,
+      "Changed_By": 3
+    },
+    {
+      "ID": 7,
+      "Field_Name": "Priority",
+      "Old_Value": "Medium",
+      "New_Value": "Critical",
+      "Ticket_ID": 6,
+      "Changed_By": 2
+    },
+    {
+      "ID": 8,
+      "Field_Name": "Status",
+      "Old_Value": "In Progress",
+      "New_Value": "Resolved",
+      "Ticket_ID": 6,
+      "Changed_By": 2
+    },
+    {
+      "ID": 9,
+      "Field_Name": "Status",
+      "Old_Value": "Resolved",
+      "New_Value": "Closed",
+      "Ticket_ID": 7,
+      "Changed_By": 1
+    },
+    {
+      "ID": 10,
+      "Field_Name": "Status",
+      "Old_Value": "Resolved",
+      "New_Value": "Reopened",
+      "Ticket_ID": 8,
+      "Changed_By": 5
+    }
+  ]
+}
