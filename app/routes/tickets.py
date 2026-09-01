@@ -1,15 +1,11 @@
 from flask import Blueprint, jsonify, request
 from app.config import get_db_connection
+from datetime import date, datetime, timedelta
 
 tickets_bp = Blueprint("tickets", __name__)
 
 
-# =====================================================
-# GET ALL TICKETS + FILTERS + PAGINATION
-# Filters:
-# category, status, created_by, created_at, priority
-# =====================================================
-
+# GET ALL + FILTERS + PAGINATION
 @tickets_bp.route("/tickets", methods=["GET"])
 def get_tickets():
     connection = None
@@ -19,11 +15,31 @@ def get_tickets():
         category = request.args.get("category")
         status = request.args.get("status")
         created_by = request.args.get("created_by")
-        created_at = request.args.get("created_at")
         priority = request.args.get("priority")
 
-        page = request.args.get("page", default=1, type=int) or 1
-        per_page = request.args.get("per_page", default=5, type=int) or 5
+        from_date = request.args.get(
+            "from_date",
+            (date.today() - timedelta(days=90)).isoformat()
+        )
+
+        to_date = request.args.get(
+            "to_date",
+            date.today().isoformat()
+        )
+
+        try:
+            start = datetime.strptime(from_date, "%Y-%m-%d").date()
+            end = datetime.strptime(to_date, "%Y-%m-%d").date()
+        except ValueError:
+            return jsonify({"error": "Date must be YYYY-MM-DD"}), 400
+
+        if start > end:
+            return jsonify({
+                "error": "from_date must be before to_date"
+            }), 400
+
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 5, type=int)
 
         if page < 1:
             page = 1
@@ -31,52 +47,46 @@ def get_tickets():
         if per_page < 1:
             per_page = 5
 
-        if per_page > 100:
-            per_page = 100
+        offset = (page - 1) * per_page
 
-        query = " FROM TICKET WHERE 1=1"
+        query = "SELECT * FROM TICKET WHERE 1=1"
+        count_query = "SELECT COUNT(*) AS total FROM TICKET WHERE 1=1"
+
+        conditions = ""
         values = []
 
         if category:
-            query += " AND Category = %s"
+            conditions += " AND Category = %s"
             values.append(category)
 
         if status:
-            query += " AND Status = %s"
+            conditions += " AND Status = %s"
             values.append(status)
 
         if created_by:
-            query += " AND Created_By = %s"
+            conditions += " AND Created_By = %s"
             values.append(created_by)
 
-        if created_at:
-            query += " AND DATE(Created_At) = %s"
-            values.append(created_at)
-
         if priority:
-            query += " AND Priority = %s"
+            conditions += " AND Priority = %s"
             values.append(priority)
+
+        conditions += " AND DATE(Created_At) BETWEEN %s AND %s"
+        values.extend([from_date, to_date])
 
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
-        # Count tickets after applying filters
-        count_query = "SELECT COUNT(*) AS total" + query
-
-        cursor.execute(count_query, values)
+        cursor.execute(count_query + conditions, values)
         total = cursor.fetchone()["total"]
 
-        offset = (page - 1) * per_page
+        query += conditions + " ORDER BY ID ASC LIMIT %s OFFSET %s"
 
-        tickets_query = (
-            "SELECT *"
-            + query
-            + " ORDER BY ID ASC LIMIT %s OFFSET %s"
+        cursor.execute(
+            query,
+            values + [per_page, offset]
         )
 
-        ticket_values = values + [per_page, offset]
-
-        cursor.execute(tickets_query, ticket_values)
         tickets = cursor.fetchall()
 
         total_pages = (total + per_page - 1) // per_page
@@ -90,9 +100,7 @@ def get_tickets():
         }), 200
 
     except Exception as error:
-        return jsonify({
-            "error": str(error)
-        }), 500
+        return jsonify({"error": str(error)}), 500
 
     finally:
         if cursor:
@@ -102,10 +110,7 @@ def get_tickets():
             connection.close()
 
 
-# =====================================================
-# CREATE NEW TICKET
-# =====================================================
-
+# CREATE
 @tickets_bp.route("/tickets", methods=["POST"])
 def create_ticket():
     connection = None
@@ -114,72 +119,43 @@ def create_ticket():
     try:
         data = request.get_json()
 
-        if not data:
+        if not data or not data.get("title") or not data.get("created_by"):
             return jsonify({
-                "message": "JSON data is required"
+                "error": "title and created_by are required"
             }), 400
-
-        title = data.get("title")
-        description = data.get("description")
-        created_by = data.get("created_by")
-        assigned_to = data.get("assigned_to")
-        category = data.get("category", "HR")
-        status = data.get("status", "Open")
-        priority = data.get("priority", "Medium")
-
-        if not title or not created_by:
-            return jsonify({
-                "message": "title and created_by are required"
-            }), 400
-
-        connection = get_db_connection()
-        cursor = connection.cursor(dictionary=True)
 
         query = """
             INSERT INTO TICKET
-            (
-                Title,
-                Description,
-                Created_By,
-                Assigned_To,
-                Category,
-                Status,
-                Priority
-            )
+            (Title, Description, Created_By, Assigned_To,
+             Category, Status, Priority)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
 
         values = (
-            title,
-            description,
-            created_by,
-            assigned_to,
-            category,
-            status,
-            priority
+            data.get("title"),
+            data.get("description"),
+            data.get("created_by"),
+            data.get("assigned_to"),
+            data.get("category", "HR"),
+            data.get("status", "Open"),
+            data.get("priority", "Medium")
         )
+
+        connection = get_db_connection()
+        cursor = connection.cursor()
 
         cursor.execute(query, values)
         connection.commit()
 
-        ticket_id = cursor.lastrowid
+        data["ID"] = cursor.lastrowid
 
-        cursor.execute(
-            "SELECT * FROM TICKET WHERE ID = %s",
-            (ticket_id,)
-        )
-
-        new_ticket = cursor.fetchone()
-
-        return jsonify(new_ticket), 201
+        return jsonify(data), 201
 
     except Exception as error:
         if connection:
             connection.rollback()
 
-        return jsonify({
-            "error": str(error)
-        }), 500
+        return jsonify({"error": str(error)}), 500
 
     finally:
         if cursor:
@@ -189,40 +165,24 @@ def create_ticket():
             connection.close()
 
 
-# =====================================================
-# SEARCH TICKETS
-# One keyword searches:
-# Title
-# Description
-# Created By ID
-# Created By Name
-# =====================================================
-
+# SEARCH
 @tickets_bp.route("/tickets/search", methods=["GET"])
 def search_tickets():
     connection = None
     cursor = None
 
     try:
-        search = request.args.get("q")
+        word = request.args.get("q")
 
-        if not search:
-            return jsonify({
-                "message": "Please enter a search keyword"
-            }), 400
+        if not word:
+            return jsonify({"error": "Search word is required"}), 400
 
-        connection = get_db_connection()
-        cursor = connection.cursor(dictionary=True)
-
-        search_value = f"%{search}%"
+        search = f"%{word}%"
 
         query = """
-            SELECT
-                t.*,
-                u.Full_Name AS Created_By_Name
+            SELECT t.*, u.Full_Name AS Created_By_Name
             FROM TICKET t
-            LEFT JOIN `USER` u
-                ON t.Created_By = u.ID
+            LEFT JOIN `USER` u ON t.Created_By = u.ID
             WHERE t.Title LIKE %s
                OR t.Description LIKE %s
                OR u.Full_Name LIKE %s
@@ -230,28 +190,16 @@ def search_tickets():
             ORDER BY t.ID ASC
         """
 
-        cursor.execute(
-            query,
-            (
-                search_value,
-                search_value,
-                search_value,
-                search_value
-            )
-        )
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
 
+        cursor.execute(query, (search, search, search, search))
         tickets = cursor.fetchall()
 
-        return jsonify({
-            "search": search,
-            "count": len(tickets),
-            "tickets": tickets
-        }), 200
+        return jsonify(tickets), 200
 
     except Exception as error:
-        return jsonify({
-            "error": str(error)
-        }), 500
+        return jsonify({"error": str(error)}), 500
 
     finally:
         if cursor:
@@ -261,12 +209,9 @@ def search_tickets():
             connection.close()
 
 
-# =====================================================
-# GET TICKET BY ID
-# =====================================================
-
+# GET BY ID
 @tickets_bp.route("/tickets/<int:ticket_id>", methods=["GET"])
-def get_ticket_by_id(ticket_id):
+def get_ticket(ticket_id):
     connection = None
     cursor = None
 
@@ -281,17 +226,13 @@ def get_ticket_by_id(ticket_id):
 
         ticket = cursor.fetchone()
 
-        if ticket is None:
-            return jsonify({
-                "message": "Ticket not found"
-            }), 404
+        if not ticket:
+            return jsonify({"error": "Ticket not found"}), 404
 
         return jsonify(ticket), 200
 
     except Exception as error:
-        return jsonify({
-            "error": str(error)
-        }), 500
+        return jsonify({"error": str(error)}), 500
 
     finally:
         if cursor:
@@ -301,10 +242,7 @@ def get_ticket_by_id(ticket_id):
             connection.close()
 
 
-# =====================================================
-# UPDATE TICKET
-# =====================================================
-
+# UPDATE
 @tickets_bp.route("/tickets/<int:ticket_id>", methods=["PUT"])
 def update_ticket(ticket_id):
     connection = None
@@ -313,76 +251,36 @@ def update_ticket(ticket_id):
     try:
         data = request.get_json()
 
-        if not data:
-            return jsonify({
-                "message": "JSON data is required"
-            }), 400
+        allowed = {
+            "title": "Title",
+            "description": "Description",
+            "assigned_to": "Assigned_To",
+            "category": "Category",
+            "status": "Status",
+            "priority": "Priority"
+        }
 
-        connection = get_db_connection()
-        cursor = connection.cursor(dictionary=True)
+        fields = []
+        values = []
 
-        cursor.execute(
-            "SELECT * FROM TICKET WHERE ID = %s",
-            (ticket_id,)
-        )
+        for key, column in allowed.items():
+            if key in data:
+                fields.append(f"{column} = %s")
+                values.append(data[key])
 
-        ticket = cursor.fetchone()
+        if not fields:
+            return jsonify({"error": "No fields to update"}), 400
 
-        if ticket is None:
-            return jsonify({
-                "message": "Ticket not found"
-            }), 404
+        values.append(ticket_id)
 
-        title = data.get(
-            "title",
-            ticket["Title"]
-        )
-
-        description = data.get(
-            "description",
-            ticket["Description"]
-        )
-
-        assigned_to = data.get(
-            "assigned_to",
-            ticket["Assigned_To"]
-        )
-
-        category = data.get(
-            "category",
-            ticket["Category"]
-        )
-
-        status = data.get(
-            "status",
-            ticket["Status"]
-        )
-
-        priority = data.get(
-            "priority",
-            ticket["Priority"]
-        )
-
-        query = """
+        query = f"""
             UPDATE TICKET
-            SET Title = %s,
-                Description = %s,
-                Assigned_To = %s,
-                Category = %s,
-                Status = %s,
-                Priority = %s
+            SET {", ".join(fields)}
             WHERE ID = %s
         """
 
-        values = (
-            title,
-            description,
-            assigned_to,
-            category,
-            status,
-            priority,
-            ticket_id
-        )
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
 
         cursor.execute(query, values)
         connection.commit()
@@ -392,17 +290,18 @@ def update_ticket(ticket_id):
             (ticket_id,)
         )
 
-        updated_ticket = cursor.fetchone()
+        ticket = cursor.fetchone()
 
-        return jsonify(updated_ticket), 200
+        if not ticket:
+            return jsonify({"error": "Ticket not found"}), 404
+
+        return jsonify(ticket), 200
 
     except Exception as error:
         if connection:
             connection.rollback()
 
-        return jsonify({
-            "error": str(error)
-        }), 500
+        return jsonify({"error": str(error)}), 500
 
     finally:
         if cursor:
@@ -412,10 +311,7 @@ def update_ticket(ticket_id):
             connection.close()
 
 
-# =====================================================
-# DELETE TICKET
-# =====================================================
-
+# DELETE
 @tickets_bp.route("/tickets/<int:ticket_id>", methods=["DELETE"])
 def delete_ticket(ticket_id):
     connection = None
@@ -423,24 +319,15 @@ def delete_ticket(ticket_id):
 
     try:
         connection = get_db_connection()
-        cursor = connection.cursor(dictionary=True)
-
-        cursor.execute(
-            "SELECT * FROM TICKET WHERE ID = %s",
-            (ticket_id,)
-        )
-
-        ticket = cursor.fetchone()
-
-        if ticket is None:
-            return jsonify({
-                "message": "Ticket not found"
-            }), 404
+        cursor = connection.cursor()
 
         cursor.execute(
             "DELETE FROM TICKET WHERE ID = %s",
             (ticket_id,)
         )
+
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Ticket not found"}), 404
 
         connection.commit()
 
@@ -452,9 +339,7 @@ def delete_ticket(ticket_id):
         if connection:
             connection.rollback()
 
-        return jsonify({
-            "error": str(error)
-        }), 500
+        return jsonify({"error": str(error)}), 500
 
     finally:
         if cursor:
