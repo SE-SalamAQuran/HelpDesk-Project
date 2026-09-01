@@ -23,8 +23,10 @@ db = firestore.client()
 def create_app():
     app = Flask(__name__)
 
-    # Authentication routes
     from app.routes.auth import auth_bp
     app.register_blueprint(auth_bp)
+
+    from app.routes.attachment import attachment_bp
+    app.register_blueprint(attachment_bp)
 
     return app
