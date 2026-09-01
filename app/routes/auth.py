@@ -64,6 +64,29 @@ def set_user_permissions(uid, role="employee"):
 
     return permissions
 
+def refresh_firebase_token(refresh_token):
+
+    url = (
+        "https://securetoken.googleapis.com/v1/"
+        f"token?key={FIREBASE_API_KEY}"
+    )
+
+    response = requests.post(
+        url,
+        data={
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token
+        },
+        timeout=10
+    )
+
+    result = response.json()
+
+    if response.status_code != 200:
+        return None
+
+    return result
+
 
 
 def token_required(f):
@@ -201,6 +224,26 @@ def signup():
         role
     )
 
+    refreshed = refresh_firebase_token(
+        result.get("refreshToken")
+    )
+
+    if not refreshed:
+        return jsonify({
+            "message": "Account created but token refresh failed"
+        }), 500
+
+    return jsonify({
+        "message": "Account created successfully",
+        "uid": uid,
+        "email": result.get("email"),
+        "role": role,
+        "permissions": permissions,
+
+        "access_token": refreshed.get("id_token"),
+        "refresh_token": refreshed.get("refresh_token")
+    }), 201
+
 
 
     login_url = (
@@ -304,15 +347,15 @@ def login():
 
     uid = result.get("localId")
 
-
-    # Get Firebase user
     user_record = firebase_auth.get_user(uid)
 
     claims = user_record.custom_claims or {}
 
+    role = claims.get("role")
+    permissions = claims.get("permissions")
 
-    # If user does not have permissions yet
-    if not claims.get("permissions"):
+    # If user does not have claims yet
+    if not role or permissions is None:
 
         role = "employee"
 
@@ -321,48 +364,33 @@ def login():
             role
         )
 
-        # Login again so the new JWT
-        # contains the permissions
-
-        response = requests.post(
-            url,
-            json=payload,
-            timeout=10
+        # Need a fresh JWT after adding claims
+        refreshed = refresh_firebase_token(
+            result.get("refreshToken")
         )
 
-        result = response.json()
+        if not refreshed:
+            return jsonify({
+                "message": "Login successful but token refresh failed"
+            }), 500
+
+        access_token = refreshed.get("id_token")
+        refresh_token = refreshed.get("refresh_token")
 
     else:
 
-        role = claims.get(
-            "role",
-            "employee"
-        )
-
-        permissions = claims.get(
-            "permissions",
-            []
-        )
-
+        access_token = result.get("idToken")
+        refresh_token = result.get("refreshToken")
 
     return jsonify({
-
         "message": "Login successful",
-
-        "uid": result.get("localId"),
-
+        "uid": uid,
         "email": result.get("email"),
-
         "role": role,
-
         "permissions": permissions,
 
-        "idToken": result.get("idToken"),
-
-        "refreshToken": result.get(
-            "refreshToken"
-        )
-
+        "access_token": access_token,
+        "refresh_token": refresh_token
     }), 200
 
 
@@ -514,15 +542,14 @@ def google_sign_in():
 
     uid = result.get("localId")
 
-
-    user_record = firebase_auth.get_user(
-        uid
-    )
-
+    user_record = firebase_auth.get_user(uid)
     claims = user_record.custom_claims or {}
 
+    role = claims.get("role")
+    permissions = claims.get("permissions")
 
-    if not claims.get("permissions"):
+    # If permissions are not added yet
+    if not role or permissions is None:
 
         role = "employee"
 
@@ -531,76 +558,34 @@ def google_sign_in():
             role
         )
 
-
-        refresh_url = (
-            "https://securetoken.googleapis.com/v1/"
-            f"token?key={FIREBASE_API_KEY}"
+        # Get a new JWT containing role + permissions
+        refreshed = refresh_firebase_token(
+            result.get("refreshToken")
         )
 
+        if not refreshed:
+            return jsonify({
+                "message":
+                "Google login successful but token refresh failed"
+            }), 500
 
-        refresh_response = requests.post(
-
-            refresh_url,
-
-            data={
-                "grant_type":
-                "refresh_token",
-
-                "refresh_token":
-                result.get(
-                    "refreshToken"
-                )
-            },
-
-            timeout=10
-        )
-
-
-        refresh_result = (
-            refresh_response.json()
-        )
-
-
-        id_token = refresh_result.get(
-            "id_token"
-        )
+        access_token = refreshed.get("id_token")
+        refresh_token = refreshed.get("refresh_token")
 
     else:
 
-        role = claims.get(
-            "role",
-            "employee"
-        )
-
-        permissions = claims.get(
-            "permissions",
-            []
-        )
-
-        id_token = result.get(
-            "idToken"
-        )
-
+        access_token = result.get("idToken")
+        refresh_token = result.get("refreshToken")
 
     return jsonify({
-
-        "message":
-        "Google sign in successful",
-
+        "message": "Google sign in successful",
         "uid": uid,
-
         "email": result.get("email"),
-
-        "name": result.get(
-            "displayName"
-        ),
-
+        "name": result.get("displayName"),
         "role": role,
-
         "permissions": permissions,
-
-        "idToken": id_token
-
+        "access_token": access_token,
+        "refresh_token": refresh_token
     }), 200
 
 
