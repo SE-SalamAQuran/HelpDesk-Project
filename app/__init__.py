@@ -5,6 +5,8 @@ from flask import Flask
 from firebase_admin import credentials, firestore
 
 
+
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 firebase_key = os.path.join(
@@ -28,5 +30,8 @@ def create_app():
 
     from app.routes.attachment import attachment_bp
     app.register_blueprint(attachment_bp)
+
+    from app.routes.frontend import frontend_bp
+    app.register_blueprint(frontend_bp)
 
     return app
