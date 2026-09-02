@@ -1,1 +1,202 @@
-{% extends "base.html" %}{% block title %}Edit Ticket - HelpDesk{% endblock %}{% block body %}<div class="shell">{% include "partials/sidebar.html" %}<main class="content"><header class="top"><div><h1>Edit Ticket #{{ ticket_id }}</h1><p class="muted">Update ticket details</p></div><a class="btn ghost" href="/tickets/{{ ticket_id }}">Cancel</a></header><section class="panel form-panel"><form id="editTicketForm" class="form grid2"><div class="span2"><label>Title</label><input id="title" required></div><div class="span2"><label>Description</label><textarea id="description" rows="6"></textarea></div><div><label>Category</label><select id="category"><option>IT</option><option>HR</option></select></div><div><label>Priority</label><select id="priority"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></div><div><label>Status</label><select id="status"><option>Open</option><option>In Progress</option><option>Resolved</option><option>Closed</option><option>Reopened</option></select></div><div><label>Assigned To (User ID)</label><input id="assignedTo" type="number" min="1"></div><div class="span2"><button class="btn primary">Save Changes</button></div></form></section></main></div>{% endblock %}{% block scripts %}<script>window.CURRENT_TICKET_ID={{ ticket_id|tojson }};</script><script src="{{ url_for('static', filename='js/tickets.js') }}"></script>{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}
+Edit Ticket - HelpDesk
+{% endblock %}
+
+
+{% block body %}
+
+<div class="shell">
+
+    {% include "partials/sidebar.html" %}
+
+    <main class="content">
+
+        <header class="top">
+
+            <div>
+                <h1>
+                    Edit Ticket #{{ ticket_id }}
+                </h1>
+
+                <p class="muted">
+                    Update ticket details
+                </p>
+            </div>
+
+
+            <a
+                class="btn ghost"
+                href="/tickets/{{ ticket_id }}"
+            >
+                Cancel
+            </a>
+
+        </header>
+
+
+        <section class="panel form-panel">
+
+            <form
+                id="editTicketForm"
+                class="form grid2"
+            >
+
+                <div class="span2">
+
+                    <label>
+                        Title
+                    </label>
+
+                    <input
+                        id="title"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="span2">
+
+                    <label>
+                        Description
+                    </label>
+
+                    <textarea
+                        id="description"
+                        rows="6"
+                    ></textarea>
+
+                </div>
+
+
+                <div>
+
+                    <label>
+                        Category
+                    </label>
+
+                    <select id="category">
+
+                        <option>
+                            IT
+                        </option>
+
+                        <option>
+                            HR
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div>
+
+                    <label>
+                        Priority
+                    </label>
+
+                    <select id="priority">
+
+                        <option>
+                            Low
+                        </option>
+
+                        <option>
+                            Medium
+                        </option>
+
+                        <option>
+                            High
+                        </option>
+
+                        <option>
+                            Critical
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div>
+
+                    <label>
+                        Status
+                    </label>
+
+                    <select id="status">
+
+                        <option>
+                            Open
+                        </option>
+
+                        <option>
+                            In Progress
+                        </option>
+
+                        <option>
+                            Resolved
+                        </option>
+
+                        <option>
+                            Closed
+                        </option>
+
+                        <option>
+                            Reopened
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div>
+
+                    <label>
+                        Assigned To (User ID)
+                    </label>
+
+                    <input
+                        id="assignedTo"
+                        type="number"
+                        min="1"
+                    >
+
+                </div>
+
+
+                <div class="span2">
+
+                    <button class="btn primary">
+                        Save Changes
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+    </main>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+    window.CURRENT_TICKET_ID =
+        Number("{{ ticket_id }}");
+</script>
+
+<script
+    src="{{ url_for('static', filename='js/tickets.js') }}"
+></script>
+
+{% endblock %}

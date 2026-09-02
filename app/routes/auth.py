@@ -25,6 +25,13 @@ FIREBASE_API_KEY = os.getenv("FIREBASE_WEB_API_KEY")
 
 
 # =========================================================
+# ONLY THIS EMAIL CAN BE ADMIN
+# =========================================================
+
+MAIN_ADMIN_EMAIL = "omar.qaisi735@gmail.com"
+
+
+# =========================================================
 # ROLE PERMISSIONS
 # =========================================================
 
@@ -56,7 +63,29 @@ ROLE_PERMISSIONS = {
 
 
 # =========================================================
-# SET FIREBASE ROLE + PERMISSIONS
+# GET CORRECT ROLE
+# =========================================================
+
+def get_correct_role(email, requested_role="employee"):
+
+    email = (email or "").lower().strip()
+
+    # Main admin is always admin
+    if email == MAIN_ADMIN_EMAIL.lower():
+        return "admin"
+
+    # Nobody else can ever be admin
+    if requested_role == "admin":
+        return "employee"
+
+    if requested_role not in ["employee", "IT"]:
+        return "employee"
+
+    return requested_role
+
+
+# =========================================================
+# SET FIREBASE PERMISSIONS
 # =========================================================
 
 def set_user_permissions(uid, role="employee"):
@@ -82,6 +111,9 @@ def set_user_permissions(uid, role="employee"):
 # =========================================================
 
 def refresh_firebase_token(refresh_token):
+
+    if not refresh_token:
+        return None
 
     url = (
         "https://securetoken.googleapis.com/v1/"
@@ -119,25 +151,19 @@ def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
 
-        auth_header = request.headers.get(
-            "Authorization"
-        )
+        auth_header = request.headers.get("Authorization")
 
         if not auth_header:
 
             return jsonify({
-                "message":
-                "Authorization token is required"
+                "message": "Authorization token is required"
             }), 401
 
 
-        if not auth_header.startswith(
-            "Bearer "
-        ):
+        if not auth_header.startswith("Bearer "):
 
             return jsonify({
-                "message":
-                "Invalid authorization format"
+                "message": "Invalid authorization format"
             }), 401
 
 
@@ -149,19 +175,41 @@ def token_required(f):
 
         try:
 
-            decoded_token = (
-                firebase_auth.verify_id_token(
-                    token
-                )
+            decoded_token = firebase_auth.verify_id_token(
+                token
             )
+
+            email = (
+                decoded_token.get("email")
+                or ""
+            ).lower().strip()
+
+
+            # Extra protection:
+            # only MAIN_ADMIN_EMAIL can behave as admin
+            if email == MAIN_ADMIN_EMAIL.lower():
+
+                decoded_token["role"] = "admin"
+
+                decoded_token["permissions"] = (
+                    ROLE_PERMISSIONS["admin"]
+                )
+
+            elif decoded_token.get("role") == "admin":
+
+                decoded_token["role"] = "employee"
+
+                decoded_token["permissions"] = (
+                    ROLE_PERMISSIONS["employee"]
+                )
+
 
             g.current_user = decoded_token
 
         except Exception:
 
             return jsonify({
-                "message":
-                "Invalid or expired token"
+                "message": "Invalid or expired token"
             }), 401
 
 
@@ -192,8 +240,7 @@ def permission_required(permission):
             if permission not in permissions:
 
                 return jsonify({
-                    "message":
-                    "Permission denied"
+                    "message": "Permission denied"
                 }), 403
 
             return f(*args, **kwargs)
@@ -204,7 +251,33 @@ def permission_required(permission):
 
 
 # =========================================================
-# SYNC FIREBASE USER WITH MYSQL
+# MAIN ADMIN ONLY
+# =========================================================
+
+def main_admin_required(f):
+
+    @wraps(f)
+    @token_required
+    def decorated(*args, **kwargs):
+
+        email = (
+            g.current_user.get("email")
+            or ""
+        ).lower().strip()
+
+        if email != MAIN_ADMIN_EMAIL.lower():
+
+            return jsonify({
+                "message": "Admin access required"
+            }), 403
+
+        return f(*args, **kwargs)
+
+    return decorated
+
+
+# =========================================================
+# SYNC USER WITH MYSQL
 # =========================================================
 
 def sync_user_with_database(
@@ -216,6 +289,13 @@ def sync_user_with_database(
     connection = None
     cursor = None
 
+    email = (email or "").strip()
+
+    role = get_correct_role(
+        email,
+        role
+    )
+
     try:
 
         connection = get_db_connection()
@@ -226,7 +306,9 @@ def sync_user_with_database(
 
         cursor.execute(
             """
-            SELECT ID, Role
+            SELECT
+                ID,
+                Role
             FROM `USER`
             WHERE Email = %s
             """,
@@ -236,10 +318,9 @@ def sync_user_with_database(
         user = cursor.fetchone()
 
 
-        # USER ALREADY EXISTS
+        # Existing user
         if user:
 
-            # Keep MySQL role synchronized
             if user["Role"] != role:
 
                 cursor.execute(
@@ -259,7 +340,7 @@ def sync_user_with_database(
             return user["ID"]
 
 
-        # CREATE NEW USER
+        # New user
         cursor.execute(
             """
             INSERT INTO `USER`
@@ -272,13 +353,9 @@ def sync_user_with_database(
             VALUES (%s, %s, %s, %s)
             """,
             (
-                full_name
-                or email.split("@")[0],
-
+                full_name or email.split("@")[0],
                 email,
-
                 "FIREBASE_AUTH",
-
                 role
             )
         )
@@ -319,8 +396,7 @@ def signup():
     if not email or not password:
 
         return jsonify({
-            "message":
-            "Email and password are required"
+            "message": "Email and password are required"
         }), 400
 
 
@@ -331,11 +407,8 @@ def signup():
 
 
     payload = {
-
         "email": email,
-
         "password": password,
-
         "returnSecureToken": True
     }
 
@@ -353,16 +426,14 @@ def signup():
     except requests.RequestException:
 
         return jsonify({
-            "message":
-            "Firebase connection error"
+            "message": "Firebase connection error"
         }), 500
 
 
     if response.status_code != 200:
 
         return jsonify({
-            "message":
-            result.get(
+            "message": result.get(
                 "error",
                 {}
             ).get(
@@ -373,26 +444,28 @@ def signup():
 
 
     uid = result.get("localId")
-
-    # Every new user starts as employee
-    role = "employee"
+    firebase_email = result.get("email")
 
 
-    # Save user in MySQL
+    # Only Omar becomes admin
+    role = get_correct_role(
+        firebase_email,
+        "employee"
+    )
+
+
     user_id = sync_user_with_database(
-        email=result.get("email"),
+        email=firebase_email,
         role=role
     )
 
 
-    # Add Firebase role + permissions
     permissions = set_user_permissions(
         uid,
         role
     )
 
 
-    # Refresh token so new claims appear
     refreshed = refresh_firebase_token(
         result.get("refreshToken")
     )
@@ -418,7 +491,7 @@ def signup():
         uid,
 
         "email":
-        result.get("email"),
+        firebase_email,
 
         "role":
         role,
@@ -454,8 +527,7 @@ def login():
     if not email or not password:
 
         return jsonify({
-            "message":
-            "Email and password are required"
+            "message": "Email and password are required"
         }), 400
 
 
@@ -467,15 +539,9 @@ def login():
 
 
     payload = {
-
-        "email":
-        email,
-
-        "password":
-        password,
-
-        "returnSecureToken":
-        True
+        "email": email,
+        "password": password,
+        "returnSecureToken": True
     }
 
 
@@ -492,16 +558,14 @@ def login():
     except requests.RequestException:
 
         return jsonify({
-            "message":
-            "Firebase connection error"
+            "message": "Firebase connection error"
         }), 500
 
 
     if response.status_code != 200:
 
         return jsonify({
-            "message":
-            result.get(
+            "message": result.get(
                 "error",
                 {}
             ).get(
@@ -512,6 +576,8 @@ def login():
 
 
     uid = result.get("localId")
+
+    firebase_email = result.get("email")
 
 
     user_record = firebase_auth.get_user(
@@ -524,26 +590,35 @@ def login():
     )
 
 
-    role = claims.get(
-        "role"
-    ) or "employee"
+    old_role = claims.get(
+        "role",
+        "employee"
+    )
 
 
-    permissions = claims.get(
-        "permissions"
+    # Force correct role
+    role = get_correct_role(
+        firebase_email,
+        old_role
     )
 
 
     expected_permissions = (
-        ROLE_PERMISSIONS.get(
-            role,
-            ROLE_PERMISSIONS["employee"]
-        )
+        ROLE_PERMISSIONS[role]
     )
 
 
-    # Update claims when missing or outdated
-    if permissions != expected_permissions:
+    old_permissions = claims.get(
+        "permissions",
+        []
+    )
+
+
+    # Update Firebase claims when needed
+    if (
+        old_role != role
+        or old_permissions != expected_permissions
+    ):
 
         permissions = set_user_permissions(
             uid,
@@ -554,14 +629,12 @@ def login():
             result.get("refreshToken")
         )
 
-
         if not refreshed:
 
             return jsonify({
                 "message":
                 "Login successful but token refresh failed"
             }), 500
-
 
         access_token = refreshed.get(
             "id_token"
@@ -571,8 +644,9 @@ def login():
             "refresh_token"
         )
 
-
     else:
+
+        permissions = expected_permissions
 
         access_token = result.get(
             "idToken"
@@ -583,10 +657,10 @@ def login():
         )
 
 
-    # Sync Firebase user with MySQL
     user_id = sync_user_with_database(
-        email=result.get("email"),
-        role=role
+        email=firebase_email,
+        role=role,
+        full_name=user_record.display_name
     )
 
 
@@ -602,7 +676,7 @@ def login():
         uid,
 
         "email":
-        result.get("email"),
+        firebase_email,
 
         "role":
         role,
@@ -637,8 +711,7 @@ def reset_password():
     if not email:
 
         return jsonify({
-            "message":
-            "Email is required"
+            "message": "Email is required"
         }), 400
 
 
@@ -650,12 +723,8 @@ def reset_password():
 
 
     payload = {
-
-        "requestType":
-        "PASSWORD_RESET",
-
-        "email":
-        email
+        "requestType": "PASSWORD_RESET",
+        "email": email
     }
 
 
@@ -672,16 +741,14 @@ def reset_password():
     except requests.RequestException:
 
         return jsonify({
-            "message":
-            "Firebase connection error"
+            "message": "Firebase connection error"
         }), 500
 
 
     if response.status_code != 200:
 
         return jsonify({
-            "message":
-            result.get(
+            "message": result.get(
                 "error",
                 {}
             ).get(
@@ -730,28 +797,16 @@ def google_sign_in():
 
 
     post_body = urlencode({
-
-        "id_token":
-        google_id_token,
-
-        "providerId":
-        "google.com"
+        "id_token": google_id_token,
+        "providerId": "google.com"
     })
 
 
     payload = {
-
-        "postBody":
-        post_body,
-
-        "requestUri":
-        "http://localhost",
-
-        "returnIdpCredential":
-        True,
-
-        "returnSecureToken":
-        True
+        "postBody": post_body,
+        "requestUri": "http://localhost",
+        "returnIdpCredential": True,
+        "returnSecureToken": True
     }
 
 
@@ -776,8 +831,7 @@ def google_sign_in():
     if response.status_code != 200:
 
         return jsonify({
-            "message":
-            result.get(
+            "message": result.get(
                 "error",
                 {}
             ).get(
@@ -788,6 +842,7 @@ def google_sign_in():
 
 
     uid = result.get("localId")
+    firebase_email = result.get("email")
 
 
     user_record = firebase_auth.get_user(
@@ -800,25 +855,33 @@ def google_sign_in():
     )
 
 
-    role = claims.get(
-        "role"
-    ) or "employee"
+    old_role = claims.get(
+        "role",
+        "employee"
+    )
 
 
-    permissions = claims.get(
-        "permissions"
+    role = get_correct_role(
+        firebase_email,
+        old_role
     )
 
 
     expected_permissions = (
-        ROLE_PERMISSIONS.get(
-            role,
-            ROLE_PERMISSIONS["employee"]
-        )
+        ROLE_PERMISSIONS[role]
     )
 
 
-    if permissions != expected_permissions:
+    old_permissions = claims.get(
+        "permissions",
+        []
+    )
+
+
+    if (
+        old_role != role
+        or old_permissions != expected_permissions
+    ):
 
         permissions = set_user_permissions(
             uid,
@@ -828,7 +891,6 @@ def google_sign_in():
         refreshed = refresh_firebase_token(
             result.get("refreshToken")
         )
-
 
         if not refreshed:
 
@@ -846,8 +908,9 @@ def google_sign_in():
             "refresh_token"
         )
 
-
     else:
+
+        permissions = expected_permissions
 
         access_token = result.get(
             "idToken"
@@ -859,14 +922,9 @@ def google_sign_in():
 
 
     user_id = sync_user_with_database(
-
-        email=result.get("email"),
-
+        email=firebase_email,
         role=role,
-
-        full_name=result.get(
-            "displayName"
-        )
+        full_name=result.get("displayName")
     )
 
 
@@ -882,7 +940,7 @@ def google_sign_in():
         uid,
 
         "email":
-        result.get("email"),
+        firebase_email,
 
         "name":
         result.get("displayName"),
@@ -903,28 +961,91 @@ def google_sign_in():
 
 
 # =========================================================
+# GET ALL USERS
+# ONLY MAIN ADMIN
+# =========================================================
+
+@auth_bp.route(
+    "/users",
+    methods=["GET"]
+)
+@main_admin_required
+def get_users():
+
+    connection = None
+    cursor = None
+
+    try:
+
+        connection = get_db_connection()
+
+        cursor = connection.cursor(
+            dictionary=True
+        )
+
+
+        cursor.execute(
+            """
+            SELECT
+                ID,
+                Full_Name,
+                Email,
+                Role,
+                Created_At,
+                Updated_At
+            FROM `USER`
+            ORDER BY ID ASC
+            """
+        )
+
+
+        users = cursor.fetchall()
+
+
+        return jsonify({
+            "users": users
+        }), 200
+
+
+    except Exception as error:
+
+        return jsonify({
+            "message": str(error)
+        }), 500
+
+
+    finally:
+
+        if cursor:
+            cursor.close()
+
+        if (
+            connection
+            and connection.is_connected()
+        ):
+            connection.close()
+
+
+# =========================================================
 # CHANGE USER ROLE
-# ADMIN ONLY
+# ONLY MAIN ADMIN
 # =========================================================
 
 @auth_bp.route(
     "/set-role",
     methods=["PUT"]
 )
-@permission_required("manage_users")
+@main_admin_required
 def set_role():
 
     data = request.get_json() or {}
 
-    email = data.get("email")
+    email = (
+        data.get("email")
+        or ""
+    ).strip()
+
     new_role = data.get("role")
-
-
-    allowed_roles = [
-        "admin",
-        "IT",
-        "employee"
-    ]
 
 
     if not email or not new_role:
@@ -935,11 +1056,30 @@ def set_role():
         }), 400
 
 
+    # Omar's admin role cannot be changed
+    if (
+        email.lower()
+        == MAIN_ADMIN_EMAIL.lower()
+    ):
+
+        return jsonify({
+            "message":
+            "Main admin role cannot be changed"
+        }), 403
+
+
+    # Nobody else can become admin
+    allowed_roles = [
+        "employee",
+        "IT"
+    ]
+
+
     if new_role not in allowed_roles:
 
         return jsonify({
             "message":
-            "Invalid role"
+            "Only employee or IT roles are allowed"
         }), 400
 
 
@@ -949,10 +1089,7 @@ def set_role():
 
     try:
 
-        # -------------------------------------------------
-        # Check Firebase user
-        # -------------------------------------------------
-
+        # Firebase user must exist
         user_record = (
             firebase_auth.get_user_by_email(
                 email
@@ -960,68 +1097,34 @@ def set_role():
         )
 
 
-        # -------------------------------------------------
-        # Make sure user exists in MySQL
-        # -------------------------------------------------
-
+        # Ensure MySQL user exists
         user_id = sync_user_with_database(
-
             email=email,
-
-            role=(
-                user_record.custom_claims
-                or {}
-            ).get(
-                "role",
-                "employee"
-            ),
-
-            full_name=(
-                user_record.display_name
-            )
+            role=new_role,
+            full_name=user_record.display_name
         )
 
 
+        # Update Firebase
+        permissions = ROLE_PERMISSIONS[
+            new_role
+        ]
+
+
+        firebase_auth.set_custom_user_claims(
+            user_record.uid,
+            {
+                "role": new_role,
+                "permissions": permissions
+            }
+        )
+
+
+        # Update MySQL
         connection = get_db_connection()
 
-        cursor = connection.cursor(
-            dictionary=True
-        )
+        cursor = connection.cursor()
 
-
-        # -------------------------------------------------
-        # ONLY ONE ADMIN
-        # -------------------------------------------------
-
-        if new_role == "admin":
-
-            cursor.execute(
-                """
-                SELECT ID, Email
-                FROM `USER`
-                WHERE Role = 'admin'
-                AND Email != %s
-                LIMIT 1
-                """,
-                (email,)
-            )
-
-            existing_admin = (
-                cursor.fetchone()
-            )
-
-
-            if existing_admin:
-
-                return jsonify({
-                    "message":
-                    "Only one admin is allowed"
-                }), 409
-
-
-        # -------------------------------------------------
-        # UPDATE MYSQL ROLE
-        # -------------------------------------------------
 
         cursor.execute(
             """
@@ -1035,28 +1138,8 @@ def set_role():
             )
         )
 
+
         connection.commit()
-
-
-        # -------------------------------------------------
-        # UPDATE FIREBASE CLAIMS
-        # -------------------------------------------------
-
-        permissions = ROLE_PERMISSIONS[
-            new_role
-        ]
-
-
-        firebase_auth.set_custom_user_claims(
-            user_record.uid,
-            {
-                "role":
-                new_role,
-
-                "permissions":
-                permissions
-            }
-        )
 
 
         return jsonify({
@@ -1093,8 +1176,7 @@ def set_role():
             connection.rollback()
 
         return jsonify({
-            "message":
-            str(error)
+            "message": str(error)
         }), 500
 
 

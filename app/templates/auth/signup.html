@@ -1,1 +1,112 @@
-{% extends "base.html" %}{% block title %}Sign Up - HelpDesk{% endblock %}{% block body %}<main class="auth"><section class="auth-card"><div class="brand"><span class="logo">HD</span><div><h1>HelpDesk</h1><p>Internal Support System</p></div></div><h2>Create account</h2><p class="muted">New accounts start as employee.</p><form id="signupForm" class="form"><label>Email</label><input id="email" type="email" required><label>Password</label><input id="password" type="password" minlength="6" required><label>Confirm password</label><input id="confirmPassword" type="password" minlength="6" required><button class="btn primary">Create Account</button></form><div class="links one"><a href="/login">Already have an account?</a></div></section></main>{% endblock %}{% block scripts %}<script src="{{ url_for('static', filename='js/auth.js') }}"></script>{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}
+Sign Up - HelpDesk
+{% endblock %}
+
+
+{% block body %}
+
+<main class="auth">
+
+    <section class="auth-card">
+
+        <div class="brand">
+
+            <span class="logo">
+                HD
+            </span>
+
+            <div>
+
+                <h1>
+                    HelpDesk
+                </h1>
+
+                <p>
+                    Internal Support System
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <h2>
+            Create account
+        </h2>
+
+        <p class="muted">
+            New accounts start as employee.
+        </p>
+
+
+        <form
+            id="signupForm"
+            class="form"
+        >
+
+            <label>
+                Email
+            </label>
+
+            <input
+                id="email"
+                type="email"
+                required
+            >
+
+
+            <label>
+                Password
+            </label>
+
+            <input
+                id="password"
+                type="password"
+                minlength="6"
+                required
+            >
+
+
+            <label>
+                Confirm password
+            </label>
+
+            <input
+                id="confirmPassword"
+                type="password"
+                minlength="6"
+                required
+            >
+
+
+            <button class="btn primary">
+                Create Account
+            </button>
+
+        </form>
+
+
+        <div class="links one">
+
+            <a href="/login">
+                Already have an account?
+            </a>
+
+        </div>
+
+    </section>
+
+</main>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script
+    src="{{ url_for('static', filename='js/auth.js') }}"
+></script>
+
+{% endblock %}

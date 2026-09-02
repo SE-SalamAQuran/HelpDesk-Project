@@ -1,1 +1,125 @@
-{% extends "base.html" %}{% block title %}Login - HelpDesk{% endblock %}{% block body %}<main class="auth"><section class="auth-card"><div class="brand"><span class="logo">HD</span><div><h1>HelpDesk</h1><p>Internal Support System</p></div></div><h2>Welcome back</h2><p class="muted">Sign in to manage support tickets.</p><form id="loginForm" class="form"><label>Email</label><input id="email" type="email" required placeholder="name@company.com"><label>Password</label><input id="password" type="password" required placeholder="Password"><button class="btn primary">Login</button></form><div class="links"><a href="/forgot-password">Forgot password?</a><a href="/signup">Create account</a></div><div class="divider">or</div><button id="googleBtn" class="btn google" type="button">Continue with Google</button></section></main>{% endblock %}{% block scripts %}<script src="https://accounts.google.com/gsi/client" async defer></script><script src="{{ url_for('static', filename='js/auth.js') }}"></script>{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}
+Login - HelpDesk
+{% endblock %}
+
+
+{% block body %}
+
+<main class="auth">
+
+    <section class="auth-card">
+
+        <div class="brand">
+
+            <span class="logo">
+                HD
+            </span>
+
+            <div>
+
+                <h1>
+                    HelpDesk
+                </h1>
+
+                <p>
+                    Internal Support System
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <h2>
+            Welcome back
+        </h2>
+
+        <p class="muted">
+            Sign in to manage support tickets.
+        </p>
+
+
+        <form
+            id="loginForm"
+            class="form"
+        >
+
+            <label>
+                Email
+            </label>
+
+            <input
+                id="email"
+                type="email"
+                required
+                placeholder="name@company.com"
+            >
+
+
+            <label>
+                Password
+            </label>
+
+            <input
+                id="password"
+                type="password"
+                required
+                placeholder="Password"
+            >
+
+
+            <button class="btn primary">
+                Login
+            </button>
+
+        </form>
+
+
+        <div class="links">
+
+            <a href="/forgot-password">
+                Forgot password?
+            </a>
+
+            <a href="/signup">
+                Create account
+            </a>
+
+        </div>
+
+
+        <div class="divider">
+            or
+        </div>
+
+
+        <button
+            id="googleBtn"
+            class="btn google"
+            type="button"
+        >
+            Continue with Google
+        </button>
+
+    </section>
+
+</main>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script
+    src="https://accounts.google.com/gsi/client"
+    async
+    defer
+></script>
+
+<script
+    src="{{ url_for('static', filename='js/auth.js') }}"
+></script>
+
+{% endblock %}

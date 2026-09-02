@@ -37,4 +37,7 @@ def create_app():
     from app.routes.tickets import tickets_bp
     app.register_blueprint(tickets_bp)
 
+    from app.routes.comments import comments_bp
+    app.register_blueprint(comments_bp)
+
     return app

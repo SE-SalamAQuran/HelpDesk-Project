@@ -1,1 +1,54 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{% block title %}HelpDesk{% endblock %}</title><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></head><body><div id="toast" class="toast"></div>{% block body %}{% endblock %}<script src="{{ url_for('static', filename='js/config.js') }}"></script><script src="{{ url_for('static', filename='js/api.js') }}"></script>{% block scripts %}{% endblock %}</body></html>
+<!doctype html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>
+        {% block title %}
+        HelpDesk
+        {% endblock %}
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+    <div
+        id="toast"
+        class="toast"
+    ></div>
+
+
+    {% block body %}
+    {% endblock %}
+
+
+    <script
+        src="{{ url_for('static', filename='js/config.js') }}"
+    ></script>
+
+    <script
+        src="{{ url_for('static', filename='js/api.js') }}"
+    ></script>
+
+
+    {% block scripts %}
+    {% endblock %}
+
+</body>
+
+</html>

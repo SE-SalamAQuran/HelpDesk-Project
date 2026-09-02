@@ -221,17 +221,6 @@ async function createTicket(e) {
 
     try {
 
-        const userId =
-            Number(localStorage.getItem("user_id"));
-
-        if (!userId) {
-            toast(
-                "User ID not found. Please login again.",
-                "error"
-            );
-            return;
-        }
-
         const d = await API.request(
             APP_CONFIG.ENDPOINTS.createTicket,
             {
@@ -259,12 +248,11 @@ async function createTicket(e) {
                     priority:
                         document
                             .getElementById("priority")
-                            .value,
-
-                    created_by: userId
+                            .value
                 })
             }
         );
+
 
         const id =
             d.ID ??
@@ -273,12 +261,15 @@ async function createTicket(e) {
             d.ticket?.ID ??
             d.ticket?.id;
 
+
         location.href =
             id
                 ? `/tickets/${id}`
                 : "/tickets";
 
-    } catch (e) {
+    }
+
+    catch (e) {
 
         toast(
             e.message,

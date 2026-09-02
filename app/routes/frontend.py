@@ -31,3 +31,7 @@ def ticket_edit_page(ticket_id): return render_template("tickets/edit.html",tick
 
 @frontend_bp.route("/profile")
 def profile_page(): return render_template("dashboard/profile.html")
+
+@frontend_bp.route("/users")
+def users_page():
+    return render_template("users.html")
