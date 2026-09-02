@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-Login - HelpDesk
+Sign Up - HelpDesk
 {% endblock %}
 
 
@@ -33,16 +33,16 @@ Login - HelpDesk
 
 
         <h2>
-            Welcome back
+            Create account
         </h2>
 
         <p class="muted">
-            Sign in to manage support tickets.
+            New accounts start as employee.
         </p>
 
 
         <form
-            id="loginForm"
+            id="signupForm"
             class="form"
         >
 
@@ -54,7 +54,6 @@ Login - HelpDesk
                 id="email"
                 type="email"
                 required
-                placeholder="name@company.com"
             >
 
 
@@ -65,43 +64,37 @@ Login - HelpDesk
             <input
                 id="password"
                 type="password"
+                minlength="6"
                 required
-                placeholder="Password"
+            >
+
+
+            <label>
+                Confirm password
+            </label>
+
+            <input
+                id="confirmPassword"
+                type="password"
+                minlength="6"
+                required
             >
 
 
             <button class="btn primary">
-                Login
+                Create Account
             </button>
 
         </form>
 
 
-        <div class="links">
+        <div class="links one">
 
-            <a href="/forgot-password">
-                Forgot password?
-            </a>
-
-            <a href="/signup">
-                Create account
+            <a href="/login">
+                Already have an account?
             </a>
 
         </div>
-
-
-        <div class="divider">
-            or
-        </div>
-
-
-        <button
-            id="googleBtn"
-            class="btn google"
-            type="button"
-        >
-            Continue with Google
-        </button>
 
     </section>
 
@@ -111,12 +104,6 @@ Login - HelpDesk
 
 
 {% block scripts %}
-
-<script
-    src="https://accounts.google.com/gsi/client"
-    async
-    defer
-></script>
 
 <script
     src="{{ url_for('static', filename='js/auth.js') }}"

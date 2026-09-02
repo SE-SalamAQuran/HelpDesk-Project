@@ -1,0 +1,56 @@
+<aside class="sidebar">
+
+    <a class="side-brand" href="/dashboard">
+        <span class="logo">HD</span>
+
+        <span>
+            <b>HelpDesk</b>
+            <small>Support Portal</small>
+        </span>
+    </a>
+
+    <nav>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/tickets">Tickets</a>
+        <a href="/tickets/new">Create Ticket</a>
+        <a href="/profile">Profile</a>
+
+        <a
+            href="/users"
+            id="usersMenu"
+            style="display:none;"
+        >
+            Users
+        </a>
+    </nav>
+
+    <button
+        class="btn ghost full"
+        onclick="logout()"
+    >
+        Logout
+    </button>
+
+</aside>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const role = localStorage.getItem("role");
+
+    const email = (
+        localStorage.getItem("email") || ""
+    ).toLowerCase();
+
+    const usersMenu =
+        document.getElementById("usersMenu");
+
+    if (
+        usersMenu &&
+        role === "admin" &&
+        email === "omar.qaisi735@gmail.com"
+    ) {
+        usersMenu.style.display = "block";
+    }
+});
+</script>

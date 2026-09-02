@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Firebase private key
+Resources/serviceAccountKey.json
+
+# Uploaded attachment files
+uploads/

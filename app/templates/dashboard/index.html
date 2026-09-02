@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}
+Dashboard - HelpDesk
+{% endblock %}
+
+
+{% block body %}
+
+<div class="shell">
+
+    {% include "partials/sidebar.html" %}
+
+    <main class="content">
+
+        <header class="top">
+
+            <div>
+                <h1>Dashboard</h1>
+
+                <p class="muted">
+                    Overview of your help desk activity
+                </p>
+            </div>
+
+
+            <div class="user">
+
+                <span
+                    id="avatar"
+                    class="avatar"
+                >
+                    U
+                </span>
+
+
+                <span>
+
+                    <b id="userName">
+                        User
+                    </b>
+
+                    <small id="userRole">
+                        employee
+                    </small>
+
+                </span>
+
+            </div>
+
+        </header>
+
+
+        <section class="stats">
+
+            <article>
+
+                <span>
+                    Total Tickets
+                </span>
+
+                <b id="totalTickets">
+                    0
+                </b>
+
+            </article>
+
+
+            <article>
+
+                <span>
+                    Open
+                </span>
+
+                <b id="openTickets">
+                    0
+                </b>
+
+            </article>
+
+
+            <article>
+
+                <span>
+                    In Progress
+                </span>
+
+                <b id="progressTickets">
+                    0
+                </b>
+
+            </article>
+
+
+            <article>
+
+                <span>
+                    Resolved / Closed
+                </span>
+
+                <b id="doneTickets">
+                    0
+                </b>
+
+            </article>
+
+        </section>
+
+
+        <section class="panel">
+
+            <div class="panel-head">
+
+                <div>
+
+                    <h2>
+                        Recent Tickets
+                    </h2>
+
+                    <p class="muted">
+                        Latest support requests
+                    </p>
+
+                </div>
+
+
+                <a
+                    class="btn primary small"
+                    href="/tickets/new"
+                >
+                    + New Ticket
+                </a>
+
+            </div>
+
+
+            <div class="table-wrap">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>ID</th>
+
+                            <th>Title</th>
+
+                            <th>Category</th>
+
+                            <th>Priority</th>
+
+                            <th>Status</th>
+
+                            <th></th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="recentBody">
+
+                        <tr>
+
+                            <td
+                                colspan="6"
+                                class="empty"
+                            >
+                                Loading...
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script
+    src="{{ url_for('static', filename='js/dashboard.js') }}"
+></script>
+
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}
+Profile - HelpDesk
+{% endblock %}
+
+
+{% block body %}
+
+<div class="shell">
+
+    {% include "partials/sidebar.html" %}
+
+    <main class="content">
+
+        <header class="top">
+
+            <div>
+                <h1>My Profile</h1>
+                <p class="muted">
+                    Account, role and permissions
+                </p>
+            </div>
+
+        </header>
+
+
+        <section class="panel profile">
+
+            <span
+                id="profileAvatar"
+                class="big-avatar"
+            >
+                U
+            </span>
+
+
+            <div>
+
+                <h2 id="profileName">
+                    User
+                </h2>
+
+                <p
+                    id="profileEmail"
+                    class="muted"
+                >
+                    —
+                </p>
+
+
+                <div class="chips">
+
+                    <span
+                        id="profileRole"
+                        class="chip"
+                    >
+                        employee
+                    </span>
+
+                    <span
+                        id="verified"
+                        class="chip neutral"
+                    >
+                        Not verified
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="panel">
+
+            <h2>
+                Permissions
+            </h2>
+
+            <div
+                id="permissions"
+                class="permissions"
+            ></div>
+
+        </section>
+
+    </main>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script
+    src="{{ url_for('static', filename='js/profile.js') }}"
+></script>
+
+{% endblock %}

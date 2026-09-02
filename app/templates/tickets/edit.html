@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-Create Ticket - HelpDesk
+Edit Ticket - HelpDesk
 {% endblock %}
 
 
@@ -16,23 +16,21 @@ Create Ticket - HelpDesk
         <header class="top">
 
             <div>
-
                 <h1>
-                    Create Ticket
+                    Edit Ticket #{{ ticket_id }}
                 </h1>
 
                 <p class="muted">
-                    Submit a new support request
+                    Update ticket details
                 </p>
-
             </div>
 
 
             <a
                 class="btn ghost"
-                href="/tickets"
+                href="/tickets/{{ ticket_id }}"
             >
-                Back
+                Cancel
             </a>
 
         </header>
@@ -41,7 +39,7 @@ Create Ticket - HelpDesk
         <section class="panel form-panel">
 
             <form
-                id="createTicketForm"
+                id="editTicketForm"
                 class="form grid2"
             >
 
@@ -53,7 +51,6 @@ Create Ticket - HelpDesk
 
                     <input
                         id="title"
-                        maxlength="255"
                         required
                     >
 
@@ -107,7 +104,7 @@ Create Ticket - HelpDesk
                             Low
                         </option>
 
-                        <option selected>
+                        <option>
                             Medium
                         </option>
 
@@ -124,10 +121,58 @@ Create Ticket - HelpDesk
                 </div>
 
 
+                <div>
+
+                    <label>
+                        Status
+                    </label>
+
+                    <select id="status">
+
+                        <option>
+                            Open
+                        </option>
+
+                        <option>
+                            In Progress
+                        </option>
+
+                        <option>
+                            Resolved
+                        </option>
+
+                        <option>
+                            Closed
+                        </option>
+
+                        <option>
+                            Reopened
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div>
+
+                    <label>
+                        Assigned To (User ID)
+                    </label>
+
+                    <input
+                        id="assignedTo"
+                        type="number"
+                        min="1"
+                    >
+
+                </div>
+
+
                 <div class="span2">
 
                     <button class="btn primary">
-                        Create Ticket
+                        Save Changes
                     </button>
 
                 </div>
@@ -144,6 +189,11 @@ Create Ticket - HelpDesk
 
 
 {% block scripts %}
+
+<script>
+    window.CURRENT_TICKET_ID =
+        Number("{{ ticket_id }}");
+</script>
 
 <script
     src="{{ url_for('static', filename='js/tickets.js') }}"
