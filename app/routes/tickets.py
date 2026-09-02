@@ -1,3 +1,4 @@
+import mysql.connector
 from flask import Blueprint, jsonify, request
 from app.config import get_db_connection
 from datetime import date, datetime, timedelta
@@ -5,8 +6,7 @@ from datetime import date, datetime, timedelta
 tickets_bp = Blueprint("tickets", __name__)
 
 
-# GET ALL + FILTERS + PAGINATION
-@tickets_bp.route("/tickets", methods=["GET"])
+@tickets_bp.route("/api/tickets", methods=["GET"])
 def get_tickets():
     connection = None
     cursor = None

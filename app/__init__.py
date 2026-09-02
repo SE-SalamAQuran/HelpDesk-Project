@@ -34,4 +34,7 @@ def create_app():
     from app.routes.frontend import frontend_bp
     app.register_blueprint(frontend_bp)
 
+    from app.routes.tickets import tickets_bp
+    app.register_blueprint(tickets_bp)
+
     return app

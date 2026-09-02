@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import mysql
 
 load_dotenv()
 
@@ -10,3 +11,6 @@ DB_CONFIG = {
     "password": os.getenv("DB_PASSWORD"),
     "database": os.getenv("DB_NAME")
 }
+
+def get_db_connection():
+    return mysql.connector.connect(**DB_CONFIG)

@@ -1,1 +1,98 @@
-document.addEventListener("DOMContentLoaded",async()=>{if(!requireAuth())return;try{const p=await API.request(APP_CONFIG.ENDPOINTS.profile),n=p.name||p.email||"User";userName.textContent=n;userRole.textContent=p.role||"employee";avatar.textContent=n[0].toUpperCase()}catch(e){toast(e.message,"error")}try{const d=await API.request(APP_CONFIG.ENDPOINTS.tickets),a=Array.isArray(d)?d:(d.tickets||d.data||[]);totalTickets.textContent=a.length;openTickets.textContent=a.filter(t=>(t.Status||t.status)==="Open").length;progressTickets.textContent=a.filter(t=>(t.Status||t.status)==="In Progress").length;doneTickets.textContent=a.filter(t=>["Resolved","Closed"].includes(t.Status||t.status)).length;recentBody.innerHTML=a.slice(0,5).map(t=>{const id=t.ID??t.id;return `<tr><td>#${id}</td><td>${esc(t.Title??t.title)}</td><td>${esc(t.Category??t.category)}</td><td><span class="chip">${esc(t.Priority??t.priority)}</span></td><td>${esc(t.Status??t.status)}</td><td><a href="/tickets/${id}">View</a></td></tr>`}).join("")||'<tr><td colspan="6" class="empty">No tickets</td></tr>'}catch(e){recentBody.innerHTML=`<tr><td colspan="6" class="empty">${esc(e.message)}</td></tr>`}});
+document.addEventListener("DOMContentLoaded", async () => {
+
+    if (!requireAuth()) return;
+
+    try {
+
+        const p = await API.request(
+            APP_CONFIG.ENDPOINTS.profile
+        );
+
+        const n = p.name || p.email || "User";
+
+        userName.textContent = n;
+        userRole.textContent = p.role || "employee";
+        avatar.textContent = n[0].toUpperCase();
+
+    } catch (e) {
+
+        toast(e.message, "error");
+    }
+
+
+    try {
+
+        const d = await API.request(
+            APP_CONFIG.ENDPOINTS.getTickets
+        );
+
+        const a = Array.isArray(d)
+            ? d
+            : (d.tickets || d.data || []);
+
+        totalTickets.textContent = a.length;
+
+        openTickets.textContent =
+            a.filter(
+                t => (t.Status || t.status) === "Open"
+            ).length;
+
+        progressTickets.textContent =
+            a.filter(
+                t => (t.Status || t.status) === "In Progress"
+            ).length;
+
+        doneTickets.textContent =
+            a.filter(
+                t =>
+                    ["Resolved", "Closed"].includes(
+                        t.Status || t.status
+                    )
+            ).length;
+
+        recentBody.innerHTML =
+            a.slice(0, 5)
+                .map(t => {
+
+                    const id = t.ID ?? t.id;
+
+                    return `
+                        <tr>
+                            <td>#${id}</td>
+                            <td>${esc(t.Title ?? t.title)}</td>
+                            <td>${esc(t.Category ?? t.category)}</td>
+                            <td>
+                                <span class="chip">
+                                    ${esc(t.Priority ?? t.priority)}
+                                </span>
+                            </td>
+                            <td>${esc(t.Status ?? t.status)}</td>
+                            <td>
+                                <a href="/tickets/${id}">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                    `;
+                })
+                .join("")
+            ||
+            `
+                <tr>
+                    <td colspan="6" class="empty">
+                        No tickets
+                    </td>
+                </tr>
+            `;
+
+    } catch (e) {
+
+        recentBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="empty">
+                    ${esc(e.message)}
+                </td>
+            </tr>
+        `;
+    }
+});
