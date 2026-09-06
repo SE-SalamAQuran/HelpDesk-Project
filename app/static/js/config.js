@@ -16,13 +16,12 @@ window.APP_CONFIG = {
         getTickets: "/api/tickets",
         createTicket: "/tickets",
         ticketSearch: "/tickets/search",
-        
 
         ticketById: id =>
-            `/tickets/${id}`,
+            `/api/tickets/${id}`,
 
         comments: id =>
-             `/tickets/${id}/comments`,
+            `/tickets/${id}/comments`,
 
         uploadAttachment: id =>
             `/attachments/upload/${id}`

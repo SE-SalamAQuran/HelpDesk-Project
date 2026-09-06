@@ -253,7 +253,6 @@ async function createTicket(e) {
             }
         );
 
-
         const id =
             d.ID ??
             d.id ??
@@ -261,15 +260,12 @@ async function createTicket(e) {
             d.ticket?.ID ??
             d.ticket?.id;
 
-
         location.href =
             id
                 ? `/tickets/${id}`
                 : "/tickets";
 
-    }
-
-    catch (e) {
+    } catch (e) {
 
         toast(
             e.message,
@@ -360,32 +356,43 @@ async function loadEdit(id) {
             d.data ||
             d;
 
-        title.value =
+        const currentTitle =
             t.Title ??
             t.title ??
             "";
 
-        description.value =
+        document.getElementById("title").value =
+            currentTitle;
+
+        const ticketTitleDisplay =
+            document.getElementById("ticketTitleDisplay");
+
+        if (ticketTitleDisplay) {
+            ticketTitleDisplay.textContent =
+                currentTitle || `Ticket #${id}`;
+        }
+
+        document.getElementById("description").value =
             t.Description ??
             t.description ??
             "";
 
-        category.value =
+        document.getElementById("category").value =
             t.Category ??
             t.category ??
             "IT";
 
-        priority.value =
+        document.getElementById("priority").value =
             t.Priority ??
             t.priority ??
             "Medium";
 
-        status.value =
+        document.getElementById("status").value =
             t.Status ??
             t.status ??
             "Open";
 
-        assignedTo.value =
+        document.getElementById("assignedTo").value =
             t.Assigned_To ??
             t.assigned_to ??
             "";
@@ -401,20 +408,53 @@ async function loadEdit(id) {
 
 
 async function updateTicket(id) {
+
     try {
+
         await API.request(
             APP_CONFIG.ENDPOINTS.ticketById(id),
             {
                 method: "PUT",
+
                 body: JSON.stringify({
-                    title: document.getElementById("title").value.trim(),
-                    description: document.getElementById("description").value.trim(),
-                    category: document.getElementById("category").value,
-                    priority: document.getElementById("priority").value,
-                    status: document.getElementById("status").value,
-                    assigned_to: document.getElementById("assignedTo").value
-                        ? Number(document.getElementById("assignedTo").value)
-                        : null
+
+                    title:
+                        document
+                            .getElementById("title")
+                            .value
+                            .trim(),
+
+                    description:
+                        document
+                            .getElementById("description")
+                            .value
+                            .trim(),
+
+                    category:
+                        document
+                            .getElementById("category")
+                            .value,
+
+                    priority:
+                        document
+                            .getElementById("priority")
+                            .value,
+
+                    status:
+                        document
+                            .getElementById("status")
+                            .value,
+
+                    assigned_to:
+                        document
+                            .getElementById("assignedTo")
+                            .value
+                            ? Number(
+                                document
+                                    .getElementById("assignedTo")
+                                    .value
+                            )
+                            : null
                 })
             }
         );
@@ -422,6 +462,10 @@ async function updateTicket(id) {
         location.href = `/tickets/${id}`;
 
     } catch (e) {
-        toast(e.message, "error");
+
+        toast(
+            e.message,
+            "error"
+        );
     }
 }
