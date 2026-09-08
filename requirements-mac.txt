@@ -1,0 +1,6 @@
+Flask
+firebase-admin
+mysql-connector-python
+python-dotenv
+requests
+PyJWT
