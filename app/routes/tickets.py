@@ -745,7 +745,7 @@ def search_tickets():
 # =========================================================
 
 @tickets_bp.route(
-    "/tickets/<int:ticket_id>",
+    "/api/tickets/<int:ticket_id>",
     methods=["GET"]
 )
 @token_required
@@ -829,7 +829,7 @@ def get_ticket(ticket_id):
 # =========================================================
 
 @tickets_bp.route(
-    "/tickets/<int:ticket_id>",
+    "/api/tickets/<int:ticket_id>",
     methods=["PUT"]
 )
 @permission_required("update_ticket")
@@ -987,7 +987,7 @@ def update_ticket(ticket_id):
 # =========================================================
 
 @tickets_bp.route(
-    "/tickets/<int:ticket_id>",
+    "/api/tickets/<int:ticket_id>",
     methods=["DELETE"]
 )
 @permission_required("delete_ticket")

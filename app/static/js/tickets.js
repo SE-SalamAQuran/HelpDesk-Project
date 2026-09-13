@@ -348,49 +348,52 @@ async function loadDetail(id) {
 
 
 async function loadEdit(id) {
-
     try {
 
         const d = await API.request(
             APP_CONFIG.ENDPOINTS.ticketById(id)
         );
 
+        console.log("EDIT RESPONSE:", d);
+
         const t =
             d.ticket ||
             d.data ||
             d;
 
-        title.value =
+        document.getElementById("title").value =
             t.Title ??
             t.title ??
             "";
 
-        description.value =
+        document.getElementById("description").value =
             t.Description ??
             t.description ??
             "";
 
-        category.value =
+        document.getElementById("category").value =
             t.Category ??
             t.category ??
             "IT";
 
-        priority.value =
+        document.getElementById("priority").value =
             t.Priority ??
             t.priority ??
             "Medium";
 
-        status.value =
+        document.getElementById("status").value =
             t.Status ??
             t.status ??
             "Open";
 
-        assignedTo.value =
+        document.getElementById("assignedTo").value =
             t.Assigned_To ??
             t.assigned_to ??
             "";
 
     } catch (e) {
+
+        console.error("Load edit error:", e);
 
         toast(
             e.message,
